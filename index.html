@@ -5,16 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clever</title>
     <style>
-        html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
-        #content-frame { display: block; width: 100%; height: 100%; border: 0; }
+        body { margin: 8px; font-family: serif; text-align: center; }
+        h1 { font-size: 2em; }
+        #message { min-height: 1em; }
     </style>
 </head>
 <body>
-    <iframe id="content-frame" title="larp.mom" allow="fullscreen; autoplay; gamepad; clipboard-write" allowfullscreen></iframe>
+    <h1>404 Not Found</h1>
+    <hr>
+    <p>nginx/1.18.0</p>
+    <p id="message" role="status" aria-live="polite"></p>
+    <button id="open" type="button" hidden>Open</button>
     <script>
-        const saved = document.cookie.split(';').find(item => item.trim().startsWith('access_granted='))?.split('=')[1]?.trim();
-        document.getElementById('content-frame').src = ['gnmath.html', 'ugs.html'].includes(saved) ? saved : 'gnmath.html';
+        // This gate encrypts the entry launcher only; direct pages remain public.
+        const payload = 'lxDK0zGrBxtC50mcv0OgqnC1WMg4nXGTNrL/cIy1i7jr3MgVINwZcYB187seHuS+3L8jl+vvGio6h45f9797leSXwNJuNSZG6nQ0aBtZK0//r6XFLRHbyG4WeqvzFPUAGVgUOjGxoB65hjK8vqVpXOzr6X3EFNALV5c+0bIj+lBQIg2VOnX5IibColFGzNGFsNPemf7zDJWWw0pn+pdEfGz2YHEI1BCnQTqfaMLoSWbP78aTtKZ+vZaabJgW88WhZAexcsRQaEeHzi5CJYpAG/mAbhSksI+SjzR1jKlLWpGALCEkviu9/SPuCOL7xtqa3gEDH6mrdkNlLoMnku5GUEwm/9n5tswEki+HQqk6/ZqqWacbuT52+NmLd4ABAvDt9gQ0hThRIZXVDr3F6N7GKlvjacK64v/uh2YrfaGt2Iwda8tAezgX0gDRUdvmwi2JPG1bT7UbJMxPGfYmdlr5c0LkIF2WWueqI7GPbNsXqo1psfV5zpE/LByUUaSIZ1v2YQujq47NmnIkeTOZtYxuLvTey6Xv8o613Q0JlBElM0KN6SoUh/KUawOj6XBQaAKBo0XsAtbi6MGh5dpElYbtyAsxrbJvq/+S0xtLCFSB4KXAmat4wG3S6uYi/SwUe/F+dVJBrscHsPBGCMzhKPltVjIylxLVJsni1DmPyy1EDKD+xDwlj2X/CKswBibSN6c=';
+        const button = document.getElementById('open');
+        const message = document.getElementById('message');
+        let launcher;
+        let typed = '';
+        function launch() {
+            const tab = window.open('about:blank', '_blank');
+            if (!tab) {
+                message.textContent = 'Pop-up blocked. Allow pop-ups, then choose Open.';
+                button.hidden = false;
+                return;
+            }
+            const saved = document.cookie.split(';').find(item => item.trim().startsWith('access_granted='))?.split('=')[1]?.trim();
+            const target = new URL(launcher.pages.includes(saved) ? saved : launcher.pages[0], location.href).href;
+            tab.document.open();
+            tab.document.write(launcher.html);
+            tab.document.close();
+            tab.document.getElementById('content-frame').src = target;
+            tab.opener = null;
+            tab.focus();
+            location.replace('about:blank');
+        }
+        async function unlock() {
+            if (button.disabled) return;
+            if (launcher) { launch(); return; }
+            button.disabled = true;
+            message.textContent = '';
+            const password = typed;
+            typed = '';
+            try {
+                const bytes = Uint8Array.from(atob(payload), char => char.charCodeAt(0));
+                const material = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+                const key = await crypto.subtle.deriveKey({name:'PBKDF2', salt:bytes.slice(0,16), iterations:100000, hash:'SHA-256'}, material, {name:'AES-GCM', length:256}, false, ['decrypt']);
+                const clear = await crypto.subtle.decrypt({name:'AES-GCM', iv:bytes.slice(16,28)}, key, bytes.slice(28));
+                launcher = JSON.parse(new TextDecoder().decode(clear));
+            } catch (_) {
+                message.textContent = 'nope';
+            }
+            button.disabled = false;
+            if (launcher) launch();
+        }
+        button.addEventListener('click', launch);
+        document.addEventListener('keydown', event => {
+            if (event.ctrlKey || event.metaKey || event.altKey || event.isComposing || event.target === button) return;
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                unlock();
+            } else if (event.key === 'Backspace') {
+                event.preventDefault();
+                typed = typed.slice(0, -1);
+            } else if (event.key.length === 1) {
+                typed = (typed + event.key).slice(-128);
+            }
+        });
     </script>
-    <noscript><a href="gnmath.html">Open Games</a></noscript>
 </body>
 </html>

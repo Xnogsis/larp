@@ -6,6 +6,7 @@ import shutil
 from threading import Thread
 
 from playwright.sync_api import sync_playwright
+from browser_support import unlock_entry
 
 root = Path(__file__).resolve().parents[1]
 
@@ -61,10 +62,13 @@ try:
             await new Promise((resolve, reject) => FS.syncfs(false, error => error ? reject(error) : resolve()));
         }''')
         page.goto(origin + '/index.html')
+        page = unlock_entry(page)
+        page.on('pageerror', lambda error: errors.append(str(error)))
+        page.on('requestfailed', lambda request: failures.append(request.url))
         # Returning to the site restores Games and keeps saved data.
         hub = page.frame_locator('#content-frame')
         hub.locator('#grid .zone').first.wait_for()
-        assert page.url == origin + '/index.html'
+        assert page.url == 'about:blank'
         hub.get_by_role('searchbox').fill('Balatro')
         hub.locator('#grid .zone').filter(has_text='Balatro').click()
         hub.frame_locator('#frame').locator('#canvas').wait_for()

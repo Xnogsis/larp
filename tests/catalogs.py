@@ -9,7 +9,7 @@ from urllib.parse import parse_qs, urlsplit
 from urllib.parse import quote
 
 from playwright.sync_api import sync_playwright, expect
-from browser_support import CatalogHandler
+from browser_support import CatalogHandler, unlock_entry
 
 
 class QuietHandler(CatalogHandler):
@@ -75,8 +75,10 @@ try:
             assert ' ' not in page.locator('#frame').get_attribute('src')
             assert any(c['name'] == 'access_granted' and c['value'] == 'ugs.html' for c in page.context.cookies())
             page.goto(base, wait_until='domcontentloaded')
+            page = unlock_entry(page)
+            page.on('pageerror', lambda error: errors.append(str(error)))
             page.frame_locator('#content-frame').locator('#grid .zone').first.wait_for()
-            assert page.url == base + '/'
+            assert page.url == 'about:blank'
             assert page.frame_locator('#content-frame').locator('body').evaluate('() => location.pathname') == '/ugs.html'
             page.goto(base + '/gnmath.html', wait_until='domcontentloaded')
             page.wait_for_function("document.querySelectorAll('#grid .zone').length > 0")

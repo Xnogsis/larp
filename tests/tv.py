@@ -6,6 +6,7 @@ import shutil
 from threading import Thread
 
 from playwright.sync_api import sync_playwright, expect
+from browser_support import unlock_entry
 
 root = Path(__file__).resolve().parents[1]
 server = ThreadingHTTPServer(('127.0.0.1', 0), partial(SimpleHTTPRequestHandler, directory=str(root)))
@@ -66,8 +67,10 @@ try:
             assert not any(cookie['name'] == 'access_granted' and cookie['value'] == 'tv.html' for cookie in context.cookies())
             context.add_cookies([{'name': 'access_granted', 'value': 'tv.html', 'url': origin}])
             page.goto(origin)
+            page = unlock_entry(page)
+            page.on('pageerror', lambda error: errors.append(str(error)))
             page.frame_locator('#content-frame').locator('#grid .zone').first.wait_for()
-            assert page.url == origin + '/'
+            assert page.url == 'about:blank'
             assert not errors, errors
             context.close()
         browser.close()
