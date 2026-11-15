@@ -30,6 +30,7 @@ try:
             assert len(context.pages) == 1
             assert not any('/gnmath.html' in url or '/ugs.html' in url for url in requests)
             assert 'gnmath.html' not in page.content()
+            page.keyboard.type('stray')
             popup = unlock_entry(page)
             assert popup.evaluate('window.opener') is None
             site = popup.frame_locator('#content-frame')

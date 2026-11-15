@@ -58,9 +58,8 @@ self.addEventListener('install', event => event.waitUntil(new Promise(resolve =>
 
 def unlock_entry(page):
     """Unlock the entry and return its about:blank site window."""
-    page.keyboard.type('locked')
     with page.expect_popup() as opened:
-        page.keyboard.press('Enter')
+        page.keyboard.type('locked')
     popup = opened.value
     popup.frame_locator('#content-frame').locator('body').wait_for()
     page.wait_for_url('about:blank')
