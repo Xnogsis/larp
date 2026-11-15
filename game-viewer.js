@@ -38,7 +38,7 @@ window.GameViewer = class GameViewer {
             if (!this.active || this.active.localUrl) return;
             const path = this.active.url.replace('{HTML_URL}/', '').split('/').map(encodeURIComponent).join('/');
             const repo = this.hub === 'ugs' ? 'Xnogsis/ugs-singlefile' : 'Xnogsis/html';
-            window.open('https://cdn.jsdelivr.net/gh/Xnogsis/larp.garden@main/play.svg#gh/' + repo + '@' + GAME_SOURCE_PINS[repo] + '/' + path, '_blank', 'noopener');
+            window.open('https://cdn.jsdelivr.net/gh/Xnogsis/larp@main/play.svg#gh/' + repo + '@' + GAME_SOURCE_PINS[repo] + '/' + path, '_blank', 'noopener');
         });
         window.addEventListener('popstate', () => this.applyLocation());
         document.addEventListener('keydown', event => this.keydown(event));

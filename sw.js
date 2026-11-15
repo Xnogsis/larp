@@ -38,6 +38,9 @@ const HTML_FIXES = [
     // The game's one-line export accidentally comments out the end of this handler.
     ["G-MENBM6GSNY", body => body.replace('// space and arrow keys ', '/* space and arrow keys */ ')],
     ["google-class/coreball/", body => body.replace('window.parent.maeExportApis_();', '')],
+    // This exported NDS launcher retains a Google-host bridge that is absent here.
+    ["Pokemon%20-%20Black%20Version%202", body => body.replace('window.parent.maeExportApis_();', '')
+        .replace('<script src="//www.google.com/jsapi"></script>', '')],
     // There is no game state to save before Unity has finished starting.
     ["ColorMatch.data.unityweb", deferUnityMessages],
     ["yrgen73/draw-cl", body => body.replace('onload="sdk.showBanner();"', '')],

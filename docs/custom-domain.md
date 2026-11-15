@@ -1,8 +1,7 @@
 # Custom domain: larp.mom
 
 The site uses GitHub Pages with a custom Actions deployment. The GitHub repository
-is still `Xnogsis/larp.garden`; repository URLs and CDN references to that repository
-must keep their existing name.
+is `Xnogsis/larp`. Use that name for repository and CDN references; the alternate game launcher uses `Xnogsis/larp@main/play.svg`.
 
 ## DNS
 

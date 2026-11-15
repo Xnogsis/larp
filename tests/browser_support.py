@@ -2,6 +2,9 @@
 from http.server import SimpleHTTPRequestHandler
 from urllib.parse import parse_qs, urlsplit, unquote
 from pathlib import Path
+import os
+
+ENTRY_PASSWORD = os.environ.get("ENTRY_PASSWORD") or "locked"
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = r'''
@@ -56,12 +59,19 @@ self.addEventListener('install', event => event.waitUntil(new Promise(resolve =>
         self.wfile.write(body)
 
 
+def mock_entry_exit(page):
+    """Keep the original tab's Google redirect deterministic and off the network."""
+    page.route('https://www.google.com/**', lambda route: route.fulfill(
+        content_type='text/html', body='<!doctype html><title>Exit destination</title>'))
+
+
 def unlock_entry(page):
     """Unlock the entry and return its about:blank site window."""
+    mock_entry_exit(page)
     with page.expect_popup() as opened:
-        page.keyboard.type('locked')
+        page.keyboard.type(ENTRY_PASSWORD)
     popup = opened.value
     popup.frame_locator('#content-frame').locator('body').wait_for()
-    page.wait_for_url('about:blank')
+    page.wait_for_url('https://www.google.com/')
     assert popup.url == 'about:blank'
     return popup

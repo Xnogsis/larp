@@ -88,6 +88,26 @@ try:
         page.locator('#auto-reports').uncheck()
         game.locator('body').evaluate("() => { Promise.reject(new DOMException('The root document is not valid for pointer lock.', 'WrongDocumentError')); }")
         page.wait_for_function("diagnosticEvents.some(event=>event.kind==='rejection' && event.message.includes('WrongDocumentError'))")
+        # Report review: SDK-looking bootstraps and ambiguous failures must stay errors.
+        required_scripts = [
+            'https://cdn.jsdelivr.net/gh/bubbls/UGS-Assets/roof%20snipe%202/sdkv3/master-loader.js',
+            'https://cdn.jsdelivr.net/gh/bubbls/UGS-Assets@main/moto2/motox3m2.min.js',
+            'https://larp.mom/hub/gnmath/embeds/moto_x3m/null.php',
+            'https://cdn.jsdelivr.net/js/main.js',
+        ]
+        game.locator('body').evaluate("""(element, sources) => {
+            for (const src of sources) {
+                const script=document.createElement('script'); script.src=src;
+                const event=new Event('error'); Object.defineProperty(event,'target',{value:script});
+                window.dispatchEvent(event);
+            }
+            Promise.reject('unclassified primitive rejection');
+            Promise.reject(new DOMException('The element has no supported sources.', 'NotSupportedError'));
+        }""", required_scripts)
+        for src in required_scripts:
+            page.wait_for_function("src => diagnosticEvents.some(e => e.kind==='error' && e.message.includes(src))", arg=src)
+        page.wait_for_function("diagnosticEvents.some(e => e.kind==='rejection' && e.message.includes('unclassified primitive rejection'))")
+        page.wait_for_function("diagnosticEvents.some(e => e.kind==='rejection' && e.message.includes('NotSupportedError'))")
         page.evaluate("GameDiagnostics.note('error','Different error while opted out')")
         page.wait_for_timeout(1500)
         assert len(reports) == 1

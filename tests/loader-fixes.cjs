@@ -191,6 +191,26 @@ test('host-only bridges and missing Draw Climber ads do not stop startup', () =>
     assert.ok(fixed.includes('egret.runEgret'));
 });
 
+test('Pokemon Black 2 removes only its absent host bridge and preserves emulator startup', () => {
+    const body = `<head><script src="//www.google.com/jsapi"></script><script>window.parent.maeExportApis_();</script></head><body>
+<button id="startButton">PLAY</button><script>
+window.EJS_core = 'nds';
+window.EJS_gameUrl = 'https://example.test/Pokemon%20-%20Black%20Version%202.zip';
+document.getElementById('startButton').addEventListener('click', () => { window.started = true; });
+</script></body>`;
+    const fixed = worker.rewrite(body);
+    assert.ok(!fixed.includes('google.com/jsapi'));
+    let play;
+    const context = {window:{parent:{}},document:{getElementById:() => ({addEventListener:(event, callback) => {play = callback;}})}};
+    for (const script of fixed.matchAll(/<script>([\s\S]*?)<\/script>/g)) vm.runInNewContext(script[1], context);
+    assert.equal(context.window.EJS_core, 'nds');
+    assert.equal(context.window.EJS_gameUrl, 'https://example.test/Pokemon%20-%20Black%20Version%202.zip');
+    play();
+    assert.equal(context.window.started, true);
+    const unrelated = '<script>window.parent.maeExportApis_();</script>';
+    assert.equal(worker.rewrite(unrelated), unrelated);
+});
+
 test('Construct workers use a blob entry and resolve their imports against the real script', async () => {
     const body=worker.rewrite('<head><base href="https://cdn.jsdelivr.net/gh/example/repo@main/games/evowars/"></head>');
     const script=body.match(/<script>([\s\S]*?)<\/script>/)[1];

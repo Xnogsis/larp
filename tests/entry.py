@@ -3,8 +3,9 @@ from functools import partial
 from http.server import ThreadingHTTPServer
 from threading import Thread
 import shutil
+import subprocess
 from playwright.sync_api import sync_playwright, expect
-from browser_support import CatalogHandler, ROOT, unlock_entry
+from browser_support import CatalogHandler, ROOT, unlock_entry, ENTRY_PASSWORD, mock_entry_exit
 
 server = ThreadingHTTPServer(('127.0.0.1', 0), partial(CatalogHandler, directory=str(ROOT)))
 Thread(target=server.serve_forever, daemon=True).start()
@@ -28,6 +29,7 @@ try:
             page.keyboard.press('Enter')
             expect(page.locator('#message')).to_have_text('nope')
             assert len(context.pages) == 1
+            assert not any('www.google.com' in url for url in requests)
             assert not any('/gnmath.html' in url or '/ugs.html' in url for url in requests)
             assert 'gnmath.html' not in page.content()
             page.keyboard.type('stray')
@@ -55,11 +57,12 @@ try:
             context.close()
         context = browser.new_context()
         page = context.new_page()
+        mock_entry_exit(page)
         page.goto(base + '/')
         page.evaluate('window.nativeOpen=window.open; window.open=()=>null')
-        page.keyboard.type('lockex')
+        page.keyboard.type(ENTRY_PASSWORD[:-1] + ('x' if ENTRY_PASSWORD[-1] != 'x' else 'y'))
         page.keyboard.press('Backspace')
-        page.keyboard.type('d')
+        page.keyboard.type(ENTRY_PASSWORD[-1])
         page.keyboard.press('Enter')
         expect(page.locator('#message')).to_contain_text('Pop-up blocked')
         assert len(context.pages) == 1 and page.url == base + '/'
@@ -68,7 +71,26 @@ try:
             page.get_by_role('button', name='Open', exact=True).click()
         opened.value.frame_locator('#content-frame').locator('#grid .zone').first.wait_for()
         assert opened.value.url == 'about:blank'
-        page.wait_for_url('about:blank')
+        page.wait_for_url('https://www.google.com/')
+        context.close()
+        # A generated payload with a different password length works in real Web Crypto.
+        regenerated = subprocess.check_output(['node', '-e', """
+const fs=require('node:fs');const {decrypt,encrypt,update}=require('./.github/scripts/entry-payload.cjs');
+const source=fs.readFileSync('index.html','utf8');const payload=/const payload = '([^']+)'/.exec(source)[1];
+const shell=decrypt(payload,process.env.ENTRY_PASSWORD||'locked');
+process.stdout.write(update(source,encrypt(shell,'entry-test-123'),14));
+"""], cwd=ROOT, text=True)
+        context = browser.new_context()
+        page = context.new_page()
+        mock_entry_exit(page)
+        page.route(base + '/', lambda route: route.fulfill(body=regenerated, content_type='text/html'))
+        page.goto(base + '/')
+        with page.expect_popup() as opened:
+            page.keyboard.type('entry-test-123')
+        opened.value.frame_locator('#content-frame').locator('#grid .zone').first.wait_for()
+        assert opened.value.url == 'about:blank'
+        page.wait_for_url('https://www.google.com/')
+        context.close()
         browser.close()
     print('Passed: encrypted password entry, wrong passwords, no pre-unlock catalog loads, saved targets, popup recovery, stable blank URLs and game controls')
 finally:

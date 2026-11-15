@@ -50,6 +50,15 @@ try:
             box = page.locator(selector).bounding_box()
             assert box and box['x'] >= 0 and box['x'] + box['width'] <= 1280
         assert not page.locator('#blank').is_visible()
+        page.evaluate("window.open = (url, target, features) => { window.launchAttempt = {url, target, features}; }")
+        page.locator('#viewer-options summary').click()
+        page.locator('#jsdtab').click()
+        launch = page.evaluate('window.launchAttempt')
+        assert launch['url'].startswith('https://cdn.jsdelivr.net/gh/Xnogsis/larp@main/play.svg#gh/Xnogsis/html@')
+        assert launch['url'].endswith('/0-fix2.html')
+        assert launch['features'] == 'noopener'
+        page.locator('#viewer-options summary').click()
+
         page.go_back()
         expect(page.locator('#viewer')).not_to_be_visible()
         expect(page).to_have_title('Clever')
