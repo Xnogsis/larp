@@ -13,7 +13,7 @@ package's `ruffle.js`, and serves the chunks locally. Plaintext runtime paths
 and `publicPath` settings in game HTML are rewritten to this directory too.
 Keep the JavaScript and WASM files from the same package together.
 
-`standalone-113/` is the Ruffle player from `Xnogsis/assets/113` at commit
+`standalone-113/` is the Ruffle player from pinned `assets/113` commit
 `086917e3a6808714a0ecee3bb72eecf2512a94a7`. Its page uses a local base URL,
 omits the missing icon180.png, and connects to the site's debug panel.
 Ruffle's MIT and Apache licenses are included in the npm directory.

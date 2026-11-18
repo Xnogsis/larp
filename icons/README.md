@@ -26,19 +26,19 @@ These icons are game artwork from the official game website or publisher listing
 ## Biotomata
 
 - Game creator: Talos0248
-- Source: https://github.com/Xnogsis/Biotomata-Game/tree/30c7507d0c0cfa7501c7c21e0a5df95b3075f5d8
+- Source: https://github.com/Talos0248/Biotomata-Game (pinned commit `30c7507d0c0cfa7501c7c21e0a5df95b3075f5d8`)
 - Original image: `favicon.ico` from that commit
 - Local file: `biotomata.webp`
 
 ## Prestige Tree
 
 - Creator: Jacorb
-- Source: https://github.com/Xnogsis/Prestige-Tree/tree/cec9198c8ce9a5c6d107179871cbe84fab92ae0d
+- Source: https://github.com/Jacorb90/Prestige-Tree (pinned commit `cec9198c8ce9a5c6d107179871cbe84fab92ae0d`)
 - Image: the game’s in-game Prestige (`P`) node
 - Local file: `prestige-tree.webp`
 
 ## Fundamental
 
 - Creator: awWhy
-- Source: https://github.com/Xnogsis/Fundamental/blob/e1e2171e2812dd9013b6a991dce8c824c529b57f/Used_art/Stage.png
+- Source: https://github.com/awWhy/Fundamental (`Used_art/Stage.png` at commit `e1e2171e2812dd9013b6a991dce8c824c529b57f`)
 - Local file: `fundamental.webp`
